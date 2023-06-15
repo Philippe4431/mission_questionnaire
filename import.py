@@ -2,12 +2,9 @@ import requests
 import json
 import unicodedata
 
-# ====> REMARQUE : Les Url ci-dessous sont différentes que celles affichées dans la vidéo.
-# C'est normal, continuez bien avec les url de ce fichier
 open_quizz_db_data = (
     ("Animaux", "Les chats", "https://www.codeavecjonathan.com/res/mission/openquizzdb_50.json"),
     ("Arts", "Musée du Louvre", "https://www.codeavecjonathan.com/res/mission/openquizzdb_86.json"),
-    #("Bande dessinnée", "Tintin", "https://www.kiwime.com/oqdb/files/2124627384/OpenQuizzDB_124/openquizzdb_124.json"),
     ("Cinéma", "Alien", "https://www.codeavecjonathan.com/res/mission/openquizzdb_241.json"),
     ("Cinéma", "Star wars", "https://www.codeavecjonathan.com/res/mission/openquizzdb_90.json"),
 )
@@ -24,10 +21,10 @@ def get_quizz_filename(categorie, titre, difficulte):
 def generate_json_file(categorie, titre, url):
     out_questionnaire_data = {"categorie": categorie, "titre": titre, "questions": []}
     out_questions_data = []
-    try :
+    try:
         response = requests.get(url)
     except:
-        print("Exception pour la requete : " + url)
+        print("Exception pour la requete HTTP GET : " + url)
     else:
         try:
             data = json.loads(response.text)
@@ -51,7 +48,9 @@ def generate_json_file(categorie, titre, url):
                 file.close()
                 print("end")
         except:
-            print("Exception data pour l'url: " + url + " - Questionnaire :" + titre)
+            print(f"Exception dans la désérialisation ou l'utilisation des données (questionnaire : {titre}, url: {url})")
+
+    
 
 for quizz_data in open_quizz_db_data:
     generate_json_file(quizz_data[0], quizz_data[1], quizz_data[2])

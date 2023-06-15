@@ -1,4 +1,5 @@
 import json
+import sys
 
 class Question:
     def __init__(self, titre, choix, bonne_reponse):
@@ -7,15 +8,18 @@ class Question:
         self.bonne_reponse = bonne_reponse
 
     def from_json_data(data):
+        # Transforme les données choix tuple (titre, bool 'bonne réponse') -> [choix1, choix2....]
         choix = [i[0] for i in data["choix"]]
+        # Trouve le bon choix en fonction du bool 'bonne réponse'
         bonne_reponse = [i[0] for i in data["choix"] if i[1]]
+        # Si aucune bonne réponse ou plusieurs bonnes réponses -> Anomalie dans les donnees
         if len(bonne_reponse) != 1:
             return None
         q = Question(data["titre"], choix, bonne_reponse[0])
         return q
 
-    def poser(self):
-        print("QUESTION")
+    def poser(self, num_question, nb_questions):
+        print(f"QUESTION {num_question} / {nb_questions}")
         print("  " + self.titre)
         for i in range(len(self.choix)):
             print("  ", i+1, "-", self.choix[i])
@@ -54,34 +58,50 @@ class Questionnaire:
     def from_json_data(data):
         questionnaire_data_questions =  data["questions"]
         questions = [Question.from_json_data(i) for i in questionnaire_data_questions]
+        # Supprime les questions None (qui n'ont pas pu être crées)
+        questions = [i for i in questions if i]
 
         return Questionnaire(questions, data["categorie"], data["titre"], data["difficulte"])
+
+    def from_json_file(filename):
+        try:
+            file = open(filename, "r")
+            json_data = file.read()
+            file.close()
+            questionnaire_data = json.loads(json_data)
+        except:
+            print("Exception lors de l'ouverture ou la lecture du fichier")
+            return None
+        return Questionnaire.from_json_data(questionnaire_data)
 
 
     def lancer(self):
         score = 0
+        nb_questions = len(self.questions)
 
         print("-----")
         print("QUESTIONNAIRE : " + self.titre)
         print("  Categorie : " + self.categorie)
         print("  Difficulte : " + self.difficulte)
-        print("  Nombre de questions : " + str(len(self.questions)))
+        print("  Nombre de questions : " + str(nb_questions))
         print("-----")
-        for question in self.questions:
-            if question.poser():
+        
+        for i in range(nb_questions):
+            question = self.questions[i]
+            if question.poser(i+1, nb_questions):
                 score += 1
         print("Score final :", score, "sur", len(self.questions))
         return score
 
 
-# Charger un fichier JSON
-filename = "cinema_starwars_debutant.json"
-file = open(filename, "r")
-json_data = file.read()
-file.close()
-questionnaire_data = json.loads(json_data)
 
+# Questionnaire.from_json_file("animaux_leschats_confirme.json").lancer()
 
-Questionnaire.from_json_data(questionnaire_data).lancer()
+if len(sys.argv) < 2:
+    print("ERREUR : Vous devez spécifier le nom du fichier json à charger")
+    exit(0)
 
-print()
+json_filename = sys.argv[1]
+questionnaire = Questionnaire.from_json_file(json_filename)
+if questionnaire:
+    questionnaire.lancer()
